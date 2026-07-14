@@ -1,0 +1,22 @@
+{
+  "name": "affiliate-tracking-panel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --mode client && vite build",
+    "deploy": "npm run build && wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "hono": "^4.2.0",
+    "honox": "^0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "@hono/vite-cloudflare-pages": "^0.3.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.8",
+    "wrangler": "^3.50.0"
+  }
+}
