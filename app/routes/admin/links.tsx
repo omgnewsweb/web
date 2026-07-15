@@ -17,7 +17,7 @@ export const POST = createRoute(async (c) => {
   let slug = (body.slug as string).replace(/^\/+|\/+$/g, '')
   let finalImageUrl = body.og_image_url as string || ''
   let siteName = body.og_site_name as string || ''
-  let ogUrl = body.og_url as string || '' // Tangkap Canonical URL
+  let ogUrl = body.og_url as string || '' 
 
   const imageFile = body.image_file as File
   if (imageFile && imageFile.size > 0) {
@@ -52,9 +52,8 @@ export const POST = createRoute(async (c) => {
   }
 
   if (!errorMsg) {
-    // Insert dengan og_url
     await c.env.DB.prepare('INSERT INTO links (name, slug, target_url, og_title, og_description, og_image_url, og_site_name, og_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(name, slug, body.target_url as string, body.og_title as string, body.og_description as string, finalImageUrl, siteName, ogUrl).run()
+      .bind(name, slug, body.target_url as string, (body.og_title as string) || '', body.og_description as string, finalImageUrl, siteName, ogUrl).run()
     successMsg = 'Tautan afiliasi baru berhasil dibuat!'
   }
 
@@ -96,7 +95,7 @@ async function renderPage(c: any, successMsg = '', errorMsg = '') {
             </div>
 
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Fake Canonical URL (Berita Besar)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Fake Canonical URL (Opsional)</label>
               <input type="url" name="og_url" id="input-canonical" placeholder="Misal: https://news.detik.com/berita/..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none" />
             </div>
 
@@ -105,8 +104,8 @@ async function renderPage(c: any, successMsg = '', errorMsg = '') {
               <input type="text" name="og_site_name" id="input-domain" placeholder="Misal: Detik News" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Judul Open Graph</label>
-              <input type="text" name="og_title" id="input-title" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Judul Open Graph (Kosongkan bila tidak perlu)</label>
+              <input type="text" name="og_title" id="input-title" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Open Graph</label>
@@ -132,8 +131,8 @@ async function renderPage(c: any, successMsg = '', errorMsg = '') {
               <img id="prev-img" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22100%25%22%20height%3D%22261%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23f0f2f5%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%23bcc0c4%22%20dy%3D%22.3em%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%20font-size%3D%2216%22%3EPratinjau Gambar%3C%2Ftext%3E%3C%2Fsvg%3E" className="w-full h-[261px] object-cover bg-gray-50" />
               <div className="p-3 bg-[#f2f3f5]">
                 <span id="prev-domain" className="text-[12px] text-[#606770] uppercase block mb-1"></span>
-                <div id="prev-title" className="text-[16px] font-semibold text-[#1d2129] leading-tight truncate">Judul Menarik Di Sini</div>
-                <div id="prev-desc" className="text-[14px] text-[#606770] mt-1 line-clamp-2">Deskripsi singkat penawaran...</div>
+                <div id="prev-title" className="text-[16px] font-semibold text-[#1d2129] leading-tight truncate"></div>
+                <div id="prev-desc" className="text-[14px] text-[#606770] mt-1 line-clamp-2">Keterangan...</div>
               </div>
             </div>
           </div>
@@ -160,8 +159,11 @@ async function renderPage(c: any, successMsg = '', errorMsg = '') {
 
       <script dangerouslySetInnerHTML={{ __html: `
         function upd() {
-          document.getElementById('prev-title').innerText = document.getElementById('input-title').value || 'Judul Menarik Di Sini';
-          document.getElementById('prev-desc').innerText = document.getElementById('input-desc').value || 'Deskripsi singkat penawaran...';
+          const titleVal = document.getElementById('input-title').value;
+          document.getElementById('prev-title').innerText = titleVal;
+          document.getElementById('prev-title').style.display = titleVal ? 'block' : 'none';
+
+          document.getElementById('prev-desc').innerText = document.getElementById('input-desc').value || 'Keterangan...';
           
           const domainInput = document.getElementById('input-domain').value;
           const canonicalInput = document.getElementById('input-canonical').value;
