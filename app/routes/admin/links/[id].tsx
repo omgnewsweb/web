@@ -8,9 +8,8 @@ export const POST = createRoute(async (c) => {
   
   if (body._action === 'UPDATE') {
     let slug = (body.slug as string).replace(/^\/+|\/+$/g, '')
-    // UPDATE Query ditambahkan og_url
     await c.env.DB.prepare('UPDATE links SET name=?, slug=?, target_url=?, og_title=?, og_description=?, og_image_url=?, og_site_name=?, og_url=? WHERE id=?')
-      .bind(body.name as string, slug, body.target_url as string, body.og_title as string, body.og_description as string, body.og_image_url as string, body.og_site_name as string, body.og_url as string, id).run()
+      .bind(body.name as string, slug, body.target_url as string, (body.og_title as string) || '', body.og_description as string, body.og_image_url as string, body.og_site_name as string, body.og_url as string, id).run()
     successMsg = 'Tautan berhasil diperbarui!'
   } else if (body._action === 'DELETE') {
     await c.env.DB.prepare('DELETE FROM links WHERE id=?').bind(id).run()
@@ -33,7 +32,6 @@ async function renderPage(c: any, id: string, successMsg = '') {
     <AdminShell activePage="links">
       <div className="mb-8 border-b pb-4 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Edit: {link.name}</h1>
-        {/* Tombol Copy Link dan Kembali ditambahkan di sini */}
         <div className="flex gap-3">
           <button type="button" onClick={`copyLink('${link.slug}')`} className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded font-semibold text-sm transition shadow-sm">Copy Link</button>
           <a href="/admin/links" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-semibold text-sm transition shadow-sm">← Kembali</a>
@@ -48,7 +46,6 @@ async function renderPage(c: any, id: string, successMsg = '') {
             <input type="hidden" name="_action" value="UPDATE" />
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Internal Link</label>
-              {/* defaultValue diganti menjadi value agar bisa dibaca oleh SSR HTML */}
               <input type="text" name="name" value={link.name || ''} className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 outline-none bg-blue-50" required />
             </div>
             <div>
@@ -61,17 +58,17 @@ async function renderPage(c: any, id: string, successMsg = '') {
             </div>
 
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Fake Canonical URL</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Fake Canonical URL (Opsional)</label>
               <input type="url" name="og_url" id="input-canonical" value={link.og_url || ''} className="w-full px-4 py-2 border rounded-lg focus:ring-yellow-500 outline-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Situs / Domain</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Situs / Domain (Opsional)</label>
               <input type="text" name="og_site_name" id="input-domain" value={link.og_site_name || ''} className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Judul Open Graph</label>
-              <input type="text" name="og_title" id="input-title" value={link.og_title || ''} className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" required />
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Judul Open Graph (Opsional)</label>
+              <input type="text" name="og_title" id="input-title" value={link.og_title || ''} className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Open Graph</label>
@@ -96,7 +93,7 @@ async function renderPage(c: any, id: string, successMsg = '') {
             <img id="prev-img" src={link.og_image_url} className="w-full h-[261px] object-cover bg-gray-50" />
             <div className="p-3 bg-[#f2f3f5]">
               <span id="prev-domain" className="text-[12px] text-[#606770] uppercase block mb-1"></span>
-              <div id="prev-title" className="text-[16px] font-semibold text-[#1d2129] leading-tight truncate">{link.og_title}</div>
+              <div id="prev-title" className="text-[16px] font-semibold text-[#1d2129] leading-tight truncate" style={{ display: link.og_title ? 'block' : 'none' }}>{link.og_title}</div>
               <div id="prev-desc" className="text-[14px] text-[#606770] mt-1 line-clamp-2">{link.og_description}</div>
             </div>
           </div>
@@ -105,8 +102,11 @@ async function renderPage(c: any, id: string, successMsg = '') {
 
       <script dangerouslySetInnerHTML={{ __html: `
         function upd() {
-          document.getElementById('prev-title').innerText = document.getElementById('input-title').value || 'Judul Menarik Di Sini';
-          document.getElementById('prev-desc').innerText = document.getElementById('input-desc').value || 'Deskripsi singkat penawaran...';
+          const titleVal = document.getElementById('input-title').value;
+          document.getElementById('prev-title').innerText = titleVal;
+          document.getElementById('prev-title').style.display = titleVal ? 'block' : 'none';
+
+          document.getElementById('prev-desc').innerText = document.getElementById('input-desc').value || 'Keterangan...';
           
           const domainInput = document.getElementById('input-domain').value;
           const canonicalInput = document.getElementById('input-canonical').value;
@@ -124,7 +124,6 @@ async function renderPage(c: any, id: string, successMsg = '') {
         document.addEventListener('DOMContentLoaded', upd);
         ['input-title','input-desc','input-domain','input-canonical','input-img'].forEach(id => document.getElementById(id)?.addEventListener('input', upd));
 
-        // Script untuk Copy Link
         window.copyLink = function(slug) {
           const url = window.location.protocol + '//' + window.location.host + '/' + slug;
           navigator.clipboard.writeText(url).then(() => {
