@@ -21,28 +21,28 @@ app.use('/*', async (c, next) => {
   const isBot = /facebookexternalhit|WhatsApp|Twitterbot|Pinterest|LinkedInBot|TelegramBot/i.test(userAgent)
 
   if (isBot) {
-    // Sesuai instruksi Anda: Jadikan og_url dari database sebagai og:url dan canonical
-    const canonicalUrl = link.og_url ? link.og_url : c.req.url
+    // Tag URL sekarang sepenuhnya opsional dan tidak dijadikan requirement ke URL asli
+    const urlTags = link.og_url ? `
+    <meta property="og:url" content="${link.og_url}" />
+    <link rel="canonical" href="${link.og_url}" />` : ''
 
     return c.html(`
       <!DOCTYPE html>
       <html lang="id">
       <head>
         <meta charset="UTF-8" />
-        <title>${link.og_title}</title>
-        
-        <meta property="og:url" content="${canonicalUrl}" />
-        <link rel="canonical" href="${canonicalUrl}" />
+        <title>${link.og_title || 'Viral'}</title>
+        ${urlTags}
         
         <meta property="og:type" content="article" />
-        <meta property="og:title" content="${link.og_title}" />
+        ${link.og_title ? `<meta property="og:title" content="${link.og_title}" />` : ''}
         <meta property="og:description" content="${link.og_description}" />
         <meta property="og:image" content="${link.og_image_url}" />
         
         ${link.og_site_name ? `<meta property="og:site_name" content="${link.og_site_name}" />` : ''}
         
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="${link.og_title}" />
+        ${link.og_title ? `<meta name="twitter:title" content="${link.og_title}" />` : ''}
         <meta name="twitter:description" content="${link.og_description}" />
         <meta name="twitter:image" content="${link.og_image_url}" />
       </head>
